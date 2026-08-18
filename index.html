@@ -1103,8 +1103,11 @@ function pickerModal(slot){
 /* ======================================================================
    10. IMAGE HANDLING (downscaled so localStorage survives)
    ====================================================================== */
-const PHOTO_MAX_PX=900;          // long edge after downscale
-const PHOTO_BUDGET=230000;       // data-URL characters ≈ 168 KB on disk
+/* Sized so a full 66-piece closet fits inside Safari's ~5MB origin quota:
+   66 photos x 55,000 data-URL characters is about 3.6MB, leaving headroom
+   for outfits and metadata. 700px still covers a 2-3x retina card. */
+const PHOTO_MAX_PX=700;          // long edge after downscale
+const PHOTO_BUDGET=55000;        // data-URL characters ~ 40 KB on disk
 const WEBP=(function(){
   try{const c=document.createElement("canvas");c.width=c.height=1;
       return c.toDataURL("image/webp").indexOf("data:image/webp")===0;}catch(e){return false;}

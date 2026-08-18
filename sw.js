@@ -1,5 +1,5 @@
 /* Wardrobe 66 — cache-first shell so the app opens with no signal. */
-const CACHE = "wardrobe66-v2";
+const CACHE = "wardrobe66-v1";
 const SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./icon-maskable.png"
