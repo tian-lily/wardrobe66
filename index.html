@@ -342,14 +342,18 @@ a{color:inherit}
   .mark{display:none}
   .rail-nav{margin:0;flex-direction:row;gap:2px;justify-content:space-around}
   .rnav{width:auto;flex:1;height:48px;min-width:56px}
-  .rail-foot{flex-direction:row;position:absolute;right:10px;top:-999px}
+  .rail-nav{flex:1}
+  /* language button becomes a fourth tab instead of being pushed off-screen */
+  .rail-foot{flex-direction:row;position:static;flex:0 0 auto;padding-left:6px;margin-left:2px;border-left:1px solid var(--stone)}
+  .lang-btn{width:52px;height:48px;padding:0;border-radius:var(--r);border-color:transparent;background:transparent;
+    font-size:13px;letter-spacing:.06em;color:var(--ash);display:flex;align-items:center;justify-content:center}
+  .lang-btn:active{background:var(--clay-soft);color:var(--ink)}
   .wrap{padding:22px 16px 40px}
   .grid{grid-template-columns:repeat(2,1fr);gap:12px}
   .slots{grid-template-columns:repeat(3,1fr);gap:8px}
   .form-grid{grid-template-columns:1fr}
   .frow-label{width:100%}
   .modal{max-height:94vh}
-  .mobile-lang{display:inline-flex !important}
   /* iOS Safari zooms the page when a focused control is under 16px */
   .field input,.field select,.search input,.save-row input,.sortsel{font-size:16px}
   .upl{min-height:52px}
@@ -357,7 +361,6 @@ a{color:inherit}
   .iact{padding:9px 4px}
   .close{width:38px;height:38px}
 }
-.mobile-lang{display:none}
 @media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
@@ -381,7 +384,7 @@ a{color:inherit}
     </button>
   </div>
   <div class="rail-foot">
-    <button class="lang-btn" id="langBtn">中文</button>
+    <button class="lang-btn" id="langBtn" aria-label="Switch language / 切换语言" title="English / 中文">中文</button>
   </div>
 </nav>
 
