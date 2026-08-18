@@ -1,4 +1,5 @@
 WARDROBE 66 — install as an iPhone app
+Placeholder & price data for now
 ======================================
 
 WHAT'S IN HERE
