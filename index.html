@@ -430,13 +430,16 @@ function bytesLabel(b){
 /* ======================================================================
    2. TAXONOMY
    ====================================================================== */
-const CATS=["top","bottom","dress","outer","shoe","bag","acc"];
-const TARGETS={top:18,bottom:12,dress:8,outer:10,shoe:10,bag:4,acc:4};
-const TOTAL_TARGET=66;
+const CATS=["top","bottom","dress","outer","other","shoe","acc"];
+/* Targets for the 66-piece ceiling. `null` = tracked and labelled, but no cap:
+   shoes and accessories are counted and charted, just never flagged. */
+const TARGETS={top:16,bottom:20,dress:15,outer:12,other:3,shoe:null,acc:null};
+const CAPPED=CATS.filter(c=>TARGETS[c]!=null);
+const TOTAL_TARGET=CAPPED.reduce((a,c)=>a+TARGETS[c],0);   // 66
 const SEASONS=["su","sa","wi"];
 const OCCASIONS=["work","casual","outdoor","dining","sports"];
 const LIFES=["long","short"];
-const SLOTS=["outer","top","bottom","dress","shoe","bag","acc"];
+const SLOTS=["outer","top","bottom","dress","shoe","other","acc"];
 
 /* ======================================================================
    3. I18N
@@ -454,9 +457,9 @@ en:{
  "sort.recent":"Recently added","sort.priceHi":"Price, high to low","sort.priceLo":"Price, low to high",
  "sort.cpwLo":"Best cost-per-wear","sort.cpwHi":"Worst cost-per-wear","sort.worn":"Most worn","sort.rating":"Highest rated",
  "cat.top":"Tops","cat.bottom":"Bottoms","cat.dress":"Dresses","cat.outer":"Outerwear",
- "cat.shoe":"Shoes","cat.bag":"Bags","cat.acc":"Accessories",
+ "cat.shoe":"Shoes","cat.other":"Other","cat.acc":"Accessories",
  "slot.top":"Top","slot.bottom":"Bottom","slot.dress":"Dress","slot.outer":"Outerwear",
- "slot.shoe":"Shoes","slot.bag":"Bag","slot.acc":"Accessory",
+ "slot.shoe":"Shoes","slot.other":"Other","slot.acc":"Accessory",
  "s.su":"Summer","s.sa":"Spring / Autumn","s.wi":"Winter",
  "o.work":"Work commute","o.casual":"Casual daily","o.outdoor":"Outdoor & vacation","o.dining":"Fine dining","o.sports":"Sports",
  "l.long":"Long-term investment","l.short":"Short-term fast fashion",
@@ -489,7 +492,8 @@ en:{
  "an.sub":"Counts against the 66-piece ceiling, money split between investment and impulse, and the pieces earning their keep.",
  "an.total":"Pieces owned","an.ofTarget":"of {n} target","an.value":"Closet value","an.avgCpw":"Average cost / wear",
  "an.avgCpwSub":"Across worn pieces only","an.unworn":"Never worn","an.unwornSub":"{v} sitting idle",
- "an.byCat":"Category against ceiling","an.bySeason":"By season","an.byOcc":"By occasion","an.byRating":"By satisfaction",
+ "an.byCat":"Category against ceiling","an.counted":"Counted pieces","an.noTarget":"no target",
+ "an.untracked":"Tracked without a target","an.plusFree":"+{n} untracked","an.bySeason":"By season","an.byOcc":"By occasion","an.byRating":"By satisfaction",
  "an.money":"Where the money went","an.invest":"Long-term investment","an.fast":"Short-term fast fashion",
  "an.best":"Hardest-working pieces","an.worst":"Least value for money","an.alerts":"Overbuying watch",
  "an.slot":"{n} slots left","an.full":"At ceiling","an.over":"{n} over ceiling",
@@ -518,9 +522,9 @@ zh:{
  "sort.recent":"最近添加","sort.priceHi":"价格由高到低","sort.priceLo":"价格由低到高",
  "sort.cpwLo":"穿着成本最低","sort.cpwHi":"穿着成本最高","sort.worn":"穿着次数最多","sort.rating":"满意度最高",
  "cat.top":"上衣","cat.bottom":"下装","cat.dress":"连衣裙","cat.outer":"外套",
- "cat.shoe":"鞋履","cat.bag":"包袋","cat.acc":"配饰",
+ "cat.shoe":"鞋履","cat.other":"其他","cat.acc":"配饰",
  "slot.top":"上衣","slot.bottom":"下装","slot.dress":"连衣裙","slot.outer":"外套",
- "slot.shoe":"鞋履","slot.bag":"包袋","slot.acc":"配饰",
+ "slot.shoe":"鞋履","slot.other":"其他","slot.acc":"配饰",
  "s.su":"夏季","s.sa":"春秋","s.wi":"冬季",
  "o.work":"通勤工作","o.casual":"日常休闲","o.outdoor":"户外度假","o.dining":"正式赴宴","o.sports":"运动",
  "l.long":"长期投资款","l.short":"短期快时尚",
@@ -553,7 +557,8 @@ zh:{
  "an.sub":"对照 66 件上限的数量、投资与冲动之间的金钱分配，以及真正值回票价的单品。",
  "an.total":"拥有件数","an.ofTarget":"目标 {n} 件","an.value":"衣橱总值","an.avgCpw":"平均每次成本",
  "an.avgCpwSub":"仅统计穿过的单品","an.unworn":"从未穿过","an.unwornSub":"{v} 闲置",
- "an.byCat":"品类对照上限","an.bySeason":"按季节","an.byOcc":"按场合","an.byRating":"按满意度",
+ "an.byCat":"品类对照上限","an.counted":"计入件数","an.noTarget":"不限",
+ "an.untracked":"仅记录，不设上限","an.plusFree":"另有 {n} 件不计入","an.bySeason":"按季节","an.byOcc":"按场合","an.byRating":"按满意度",
  "an.money":"钱花在哪里","an.invest":"长期投资款","an.fast":"短期快时尚",
  "an.best":"最物尽其用","an.worst":"最不划算","an.alerts":"过度购买预警",
  "an.slot":"还剩 {n} 个名额","an.full":"已达上限","an.over":"超出 {n} 件",
@@ -640,10 +645,10 @@ const PRESET=[
 ["Espadrilles","草编鞋","shoe","su","outdoor",420,"short",3,16,"#D9C9A3"],
 ["Ballet Flats","芭蕾平底鞋","shoe","sa","work",980,"long",4,29,"#B0958C"],
 ["Hiking Boots","徒步靴","shoe","wi","outdoor",1380,"long",3,9,"#6B5A45"],
-["Structured Tote","通勤托特包","bag","sa","work",3680,"long",5,120,"#6C5545"],
-["Small Crossbody","小号斜挎包","bag","sa","casual",1880,"long",5,64,"#2F2D2B"],
-["Evening Clutch","晚宴手拿包","bag","wi","dining",1280,"short",3,6,"#C0A98F"],
-["Canvas Weekender","帆布旅行包","bag","su","outdoor",780,"long",4,15,"#CFC3A6"],
+["Structured Tote","通勤托特包","other","sa","work",3680,"long",5,120,"#6C5545"],
+["Small Crossbody","小号斜挎包","other","sa","casual",1880,"long",5,64,"#2F2D2B"],
+["Evening Clutch","晚宴手拿包","other","wi","dining",1280,"short",3,6,"#C0A98F"],
+["Canvas Weekender","帆布旅行包","other","su","outdoor",780,"long",4,15,"#CFC3A6"],
 ["Silk Scarf","真丝丝巾","acc","sa","work",980,"long",4,22,"#C9857F"],
 ["Cashmere Scarf","羊绒围巾","acc","wi","casual",890,"long",5,41,"#A9A293"],
 ["Leather Belt","皮带","acc","sa","work",580,"long",4,37,"#4A3A2E"],
@@ -678,6 +683,10 @@ let S=Object.assign({},DEFAULTS);
     S.builder=saved.builder||{};
     if(!Array.isArray(S.items)||!S.items.length)S.items=buildPreset();
     if(!Array.isArray(S.outfits))S.outfits=[];
+    // v1 called this category "bag"; it is now "other".
+    S.items.forEach(i=>{if(i.cat==="bag")i.cat="other";});
+    if(S.builder.bag){S.builder.other=S.builder.bag;delete S.builder.bag;}
+    if(S.filters.cat)S.filters.cat=S.filters.cat.map(c=>c==="bag"?"other":c);
   }
 })();
 function save(){ return store.write(S); }
@@ -706,7 +715,7 @@ const PATHS={
  dress:"M35 17 L45 12 Q50 19 55 12 L65 17 L71 36 L64 39 L69 106 L31 106 L36 39 L29 36 Z",
  outer:"M28 19 L42 13 L50 25 L58 13 L72 19 L81 37 L72 42 L74 106 L26 106 L28 42 L19 37 Z",
  shoe:"M18 84 L28 52 L44 52 L53 65 L76 74 L84 82 L84 92 L18 92 Z",
- bag:"M28 44 L72 44 L78 104 L22 104 Z",
+ other:"M28 44 L72 44 L78 104 L22 104 Z",
  acc:"M24 30 Q50 14 76 30 L76 46 Q50 31 24 46 Z M44 46 L44 104 L56 104 L56 46 Z"
 };
 function tone(hex,amt){
@@ -719,7 +728,7 @@ function tone(hex,amt){
 }
 function silhouette(it){
   const c=it.color||"#CFC8BC", id="g"+Math.random().toString(36).slice(2,8);
-  const extra=it.cat==="bag"?'<path d="M38 44 Q50 20 62 44" fill="none" stroke="'+tone(c,-46)+'" stroke-width="2.6"/>':
+  const extra=it.cat==="other"?'<path d="M38 44 Q50 20 62 44" fill="none" stroke="'+tone(c,-46)+'" stroke-width="2.6"/>':
               it.cat==="outer"?'<path d="M50 25 L50 106" fill="none" stroke="'+tone(c,-46)+'" stroke-width="1.6" opacity=".7"/>':
               it.cat==="shoe"?'<path d="M28 52 L44 52 L53 65" fill="none" stroke="'+tone(c,-46)+'" stroke-width="1.6" opacity=".7"/>':"";
   return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">'+
@@ -901,6 +910,12 @@ function viewStudio(){
 
 /* ---------- STATS ---------- */
 function bar(label,n,cap,forceClay){
+  if(cap==null){   // tracked, no ceiling: neutral bar scaled to the largest count
+    const max=Math.max(1,...CATS.map(c=>countBy("cat",c)));
+    return '<div class="bar-item"><div class="bar-top"><span class="lb">'+esc(label)+'</span>'+
+      '<span class="rt">'+n+' · '+esc(t("an.noTarget"))+'</span></div>'+
+      '<div class="track"><div class="fill" style="width:'+Math.round(n/max*100)+'%;background:var(--ash-2)"></div></div></div>';
+  }
   const pct=cap?Math.min(100,n/cap*100):0;
   const cls=forceClay?"":(n>cap?"over":n>=cap*.85?"warn":"ok");
   const right=cap?(n>cap?t("an.over",{n:n-cap}):n===cap?t("an.full"):t("an.slot",{n:cap-n})):n;
@@ -935,14 +950,16 @@ function viewStats(){
   const longPct=100-shortPct;
 
   const catCount={};CATS.forEach(c=>catCount[c]=countBy("cat",c));
+  const counted=CAPPED.reduce((a,c)=>a+catCount[c],0);   // only capped categories count toward 66
+  const freeCount=n-counted;
   const seasonMax=Math.max(1,...SEASONS.map(s=>countBy("season",s)));
   const occMax=Math.max(1,...OCCASIONS.map(o=>countBy("occ",o)));
   const ratingMax=Math.max(1,...[5,4,3,2,1].map(r=>countBy("rating",r)));
 
   const kpis='<div class="stat-row">'+
     '<div class="stat"><div class="k">'+esc(t("an.total"))+'</div>'+
-      '<div class="v num '+(n>TOTAL_TARGET?"over":n<=TOTAL_TARGET?"ok":"")+'">'+n+'</div>'+
-      '<div class="s">'+t("an.ofTarget",{n:TOTAL_TARGET})+'</div></div>'+
+      '<div class="v num '+(counted>TOTAL_TARGET?"over":"ok")+'">'+counted+'</div>'+
+      '<div class="s">'+t("an.ofTarget",{n:TOTAL_TARGET})+(freeCount?' · '+t("an.plusFree",{n:freeCount}):"")+'</div></div>'+
     '<div class="stat"><div class="k">'+esc(t("an.value"))+'</div><div class="v num">'+money(value)+'</div>'+
       '<div class="s">'+t("st.pieceCount",{n:n})+'</div></div>'+
     '<div class="stat"><div class="k">'+esc(t("an.avgCpw"))+'</div><div class="v num">'+(worn.length?money2(avgCpw):"—")+'</div>'+
@@ -953,9 +970,14 @@ function viewStats(){
   '</div>';
 
   const catPanel='<div class="panel"><div class="panel-head"><h2>'+esc(t("an.byCat"))+'</h2></div>'+
-    bar(t("an.total"),n,TOTAL_TARGET)+
+    bar(t("an.counted"),counted,TOTAL_TARGET)+
     '<div style="height:9px"></div>'+
-    CATS.map(c=>bar(t("cat."+c),catCount[c],TARGETS[c])).join("")+'</div>';
+    CAPPED.map(c=>bar(t("cat."+c),catCount[c],TARGETS[c])).join("")+
+    (CATS.length>CAPPED.length
+      ? '<div style="border-top:1px dashed var(--stone);margin:14px 0 12px;padding-top:12px">'+
+        '<div class="eyebrow" style="margin-bottom:9px">'+esc(t("an.untracked"))+'</div>'+
+        CATS.filter(c=>TARGETS[c]==null).map(c=>bar(t("cat."+c),catCount[c],null)).join("")+'</div>'
+      : "")+'</div>';
 
   const distPanel='<div class="panel"><div class="panel-head"><h2>'+esc(t("an.bySeason"))+'</h2></div>'+
     SEASONS.map(s=>simpleBar(t("s."+s),countBy("season",s),seasonMax,"var(--clay)")).join("")+
@@ -982,12 +1004,12 @@ function viewStats(){
 
   /* --- warnings --- */
   const alerts=[];
-  CATS.forEach(c=>{
+  CAPPED.forEach(c=>{
     const v=catCount[c],cap=TARGETS[c];
     if(v>cap)alerts.push({k:"over",h:t("an.alertOver",{cat:t("cat."+c)}),p:t("an.alertOverBody",{n:v,t:cap,d:v-cap})});
     else if(v>=Math.ceil(cap*.85)&&v<=cap)alerts.push({k:"warn",h:t("an.alertNear",{cat:t("cat."+c)}),p:t("an.alertNearBody",{n:v,t:cap,d:cap-v})});
   });
-  if(n>TOTAL_TARGET)alerts.push({k:"over",h:t("an.alertTotal"),p:t("an.alertTotalBody",{n:n})});
+  if(counted>TOTAL_TARGET)alerts.push({k:"over",h:t("an.alertTotal"),p:t("an.alertTotalBody",{n:counted})});
   if(shortPct>25)alerts.push({k:"warn",h:t("an.alertFast",{p:shortPct}),p:t("an.alertFastBody",{v:money(shortVal)})});
   const regret=items.filter(i=>i.rating<=2);
   if(regret.length)alerts.push({k:"over",h:t("an.alertDonate",{n:regret.length}),
@@ -1214,7 +1236,7 @@ function shuffle(){
   else{S.builder.top=pick("top");S.builder.bottom=pick("bottom");}
   S.builder.shoe=pick("shoe");
   if(Math.random()<.7)S.builder.outer=pick("outer");
-  if(Math.random()<.7)S.builder.bag=pick("bag");
+  if(Math.random()<.7)S.builder.other=pick("other");
   if(Math.random()<.5)S.builder.acc=pick("acc");
   Object.keys(S.builder).forEach(k=>{if(!S.builder[k])delete S.builder[k];});
   save();render();toast(t("msg.shuffled"));
